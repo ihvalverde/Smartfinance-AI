@@ -1,0 +1,234 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ==================== ENUMS ====================
+enum AccountType {
+  CHECKING
+  SAVINGS
+  CREDIT_CARD
+  CASH
+  INVESTMENT
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+  TRANSFER
+}
+
+enum CategoryType {
+  INCOME
+  EXPENSE
+}
+
+enum BudgetPeriod {
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+enum ChatRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+// ==================== MODELOS ====================
+model User {
+  id                String   @id @default(uuid())
+  email             String   @unique
+  passwordHash      String   @map("password_hash")
+  fullName          String   @map("full_name")
+  preferredCurrency String   @default("PEN") @map("preferred_currency")
+  timezone          String   @default("America/Lima")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  accounts      Account[]
+  categories    Category[]
+  budgets          Budget[]
+  chatSessions     AiChatSession[]
+  refreshTokens    RefreshToken[]
+  hiddenCategories HiddenCategory[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  tokenHash  String   @unique @map("token_hash")
+  expiresAt  DateTime @map("expires_at")
+  isRevoked  Boolean  @default(false) @map("is_revoked")
+  deviceInfo String?  @map("device_info")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@map("refresh_tokens")
+}
+
+model Account {
+  id        String      @id @default(uuid())
+  userId    String      @map("user_id")
+  name      String
+  type      AccountType
+  balance   Decimal     @default(0) @db.Decimal(15, 2)
+  currency  String      @default("PEN")
+  color     String      @default("#3B82F6")
+  icon      String      @default("wallet")
+  isActive  Boolean     @default(true) @map("is_active")
+  createdAt DateTime    @default(now()) @map("created_at")
+  updatedAt DateTime    @updatedAt @map("updated_at")
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Category {
+  id        String       @id @default(uuid())
+  userId    String?      @map("user_id")
+  parentId  String?      @map("parent_id")
+  name      String
+  type      CategoryType
+  icon      String       @default("📁")
+  color     String       @default("#6B7280")
+  isSystem  Boolean      @default(false) @map("is_system")
+  sortOrder Int          @default(0) @map("sort_order")
+  createdAt DateTime     @default(now()) @map("created_at")
+
+  user     User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryHierarchy")
+
+  transactions      Transaction[]
+  budgets           Budget[]
+  aiCategorizations AiCategorization[] @relation("SuggestedCategory")
+  hiddenBy          HiddenCategory[]
+
+  @@index([userId])
+  @@index([parentId])
+  @@map("categories")
+}
+
+model HiddenCategory {
+  userId     String   @map("user_id")
+  categoryId String   @map("category_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([userId, categoryId])
+  @@index([categoryId])
+  @@map("user_hidden_categories")
+}
+
+model Transaction {
+  id               String          @id @default(uuid())
+  accountId        String          @map("account_id")
+  categoryId       String?         @map("category_id")
+  type             TransactionType
+  amount           Decimal         @db.Decimal(15, 2)
+  currency         String          @default("PEN")
+  description      String
+  notes            String?
+  transactionDate  DateTime        @map("transaction_date") @db.Date
+  isRecurring      Boolean         @default(false) @map("is_recurring")
+  recurringPattern String?         @map("recurring_pattern")
+  transferPairId   String?         @map("transfer_pair_id")
+  metadata         Json            @default("{}")
+  createdAt        DateTime        @default(now()) @map("created_at")
+  updatedAt        DateTime        @updatedAt @map("updated_at")
+
+  account          Account           @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  category         Category?         @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  aiCategorization AiCategorization?
+
+  @@index([accountId, transactionDate(sort: Desc)])
+  @@index([categoryId])
+  @@index([type])
+  @@index([transferPairId])
+  @@map("transactions")
+}
+
+model Budget {
+  id             String       @id @default(uuid())
+  userId         String       @map("user_id")
+  categoryId     String       @map("category_id")
+  amountLimit    Decimal      @map("amount_limit") @db.Decimal(15, 2)
+  period         BudgetPeriod
+  startDate      DateTime     @map("start_date") @db.Date
+  endDate        DateTime?    @map("end_date") @db.Date
+  alertThreshold Decimal      @default(0.80) @map("alert_threshold") @db.Decimal(3, 2)
+  isActive       Boolean      @default(true) @map("is_active")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id])
+
+  @@index([userId])
+  @@map("budgets")
+}
+
+model AiCategorization {
+  id                  String   @id @default(uuid())
+  transactionId       String   @unique @map("transaction_id")
+  suggestedCategoryId String   @map("suggested_category_id")
+  confidenceScore     Decimal  @map("confidence_score") @db.Decimal(3, 2)
+  modelUsed           String   @map("model_used")
+  inputType           String   @default("text") @map("input_type")
+  rawResponse         Json?    @map("raw_response")
+  wasAccepted         Boolean? @map("was_accepted")
+  createdAt           DateTime @default(now()) @map("created_at")
+
+  transaction       Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  suggestedCategory Category    @relation("SuggestedCategory", fields: [suggestedCategoryId], references: [id])
+
+  @@map("ai_categorizations")
+}
+
+model AiChatSession {
+  id             String   @id @default(uuid())
+  userId         String   @map("user_id")
+  title          String   @default("Nueva conversación")
+  contextSummary Json?    @map("context_summary")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages AiChatMessage[]
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("ai_chat_sessions")
+}
+
+model AiChatMessage {
+  id         String   @id @default(uuid())
+  sessionId  String   @map("session_id")
+  role       ChatRole
+  content    String
+  metadata   Json?
+  tokenCount Int?     @map("token_count")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  session AiChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, createdAt])
+  @@map("ai_chat_messages")
+}
