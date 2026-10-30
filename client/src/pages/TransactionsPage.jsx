@@ -352,6 +352,9 @@ export default function TransactionsPage() {
                       <p className="mt-0.5 text-xs text-slate-500">
                         {formatDate(transaction.transactionDate, 'dd MMM')} · {transaction.account?.name}
                       </p>
+                      {transaction.notes && (
+                        <p className="mt-0.5 truncate text-xs text-slate-400">{transaction.notes}</p>
+                      )}
                       <div className="mt-2 flex flex-wrap items-center gap-2">
                         <TypeBadge type={transaction.type} />
                         {transaction.category && (
