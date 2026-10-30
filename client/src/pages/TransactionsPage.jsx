@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import {
   ArrowLeftRight,
   ChevronLeft,
+  Eye,
   ChevronRight,
   Pencil,
   Plus,
@@ -69,6 +70,7 @@ export default function TransactionsPage() {
   const [showAi, setShowAi] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [viewing, setViewing] = useState(null);
   const [initialData, setInitialData] = useState(null);
   const [scanOpen, setScanOpen] = useState(false);
   const [transferOpen, setTransferOpen] = useState(false);
@@ -318,6 +320,15 @@ export default function TransactionsPage() {
                         <div className="flex justify-end gap-1">
                           <button
                             type="button"
+                            onClick={() => setViewing(transaction)}
+                            className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                            title="Ver detalle"
+                            aria-label="Ver detalle"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
                             onClick={() => openEdit(transaction)}
                             disabled={transaction.type === 'TRANSFER'}
                             className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-30"
@@ -374,6 +385,14 @@ export default function TransactionsPage() {
                         {amountPrefix(transaction)} {formatCurrency(transaction.amount)}
                       </p>
                       <div className="mt-2 flex justify-end gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setViewing(transaction)}
+                          className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100"
+                          aria-label="Ver detalle"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
                         <button
                           type="button"
                           onClick={() => openEdit(transaction)}
@@ -449,6 +468,81 @@ export default function TransactionsPage() {
           loadMeta();
         }}
       />
+
+      <Modal
+        open={Boolean(viewing)}
+        onClose={() => setViewing(null)}
+        title="Detalle de transacci?n"
+        description={viewing?.description}
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setViewing(null)}>
+              Cerrar
+            </Button>
+            <Button
+              onClick={() => {
+                setViewing(null);
+                openEdit(viewing);
+              }}
+              disabled={viewing?.type === 'TRANSFER'}
+            >
+              Editar
+            </Button>
+          </>
+        }
+      >
+        {viewing && (
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <TypeBadge type={viewing.type} />
+              <span className="text-2xl font-bold tracking-tight text-slate-900">
+                {amountPrefix(viewing)} {formatCurrency(viewing.amount)}
+              </span>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Fecha</p>
+                <p className="mt-1 text-sm text-slate-900">{formatDate(viewing.transactionDate, 'dd MMM yyyy')}</p>
+              </div>
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Cuenta</p>
+                <p className="mt-1 text-sm text-slate-900">{viewing.account?.name || '-'}</p>
+              </div>
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Categoria</p>
+                <p className="mt-1 text-sm text-slate-900">
+                  {viewing.category ? `${viewing.category.icon} ${viewing.category.name}` : 'Sin categoria'}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Moneda</p>
+                <p className="mt-1 text-sm text-slate-900">{viewing.currency || 'PEN'}</p>
+              </div>
+            </div>
+
+            {viewing.type === 'TRANSFER' && (
+              <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                {viewing.metadata?.transferDirection === 'IN' ? 'Recibido desde' : 'Enviado a'}{' '}
+                <span className="font-semibold">{viewing.metadata?.counterpartAccountName || 'cuenta vinculada'}</span>
+              </div>
+            )}
+
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Notas</p>
+              <div className="mt-1.5 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 whitespace-pre-wrap">
+                {viewing.notes || 'Sin notas'}
+              </div>
+            </div>
+
+            {viewing.isRecurring && (
+              <p className="text-xs text-slate-500">
+                Recurrente: {viewing.recurringPattern || 'sin patron definido'}
+              </p>
+            )}
+          </div>
+        )}
+      </Modal>
 
       <Modal
         open={scanOpen}
