@@ -472,7 +472,7 @@ export default function TransactionsPage() {
       <Modal
         open={Boolean(viewing)}
         onClose={() => setViewing(null)}
-        title="Detalle de transacci?n"
+        title="Detalle de transacción"
         description={viewing?.description}
         footer={
           <>
