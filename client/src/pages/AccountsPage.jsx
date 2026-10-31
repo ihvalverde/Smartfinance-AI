@@ -3,6 +3,7 @@ import {
   ArrowLeftRight,
   Banknote,
   CreditCard,
+  Eye,
   Landmark,
   LineChart,
   Pencil,
@@ -17,12 +18,14 @@ import {
   ACCOUNT_TYPE_LABELS,
   classNames,
   formatCurrency,
+  formatDate,
   getErrorMessage,
 } from '../lib/utils.js';
 import Button from '../components/ui/Button.jsx';
 import Badge from '../components/ui/Badge.jsx';
 import EmptyState from '../components/ui/EmptyState.jsx';
 import PageLoader from '../components/ui/Spinner.jsx';
+import Modal from '../components/ui/Modal.jsx';
 import AccountForm from '../components/accounts/AccountForm.jsx';
 import TransferForm from '../components/transactions/TransferForm.jsx';
 
@@ -42,6 +45,12 @@ export default function AccountsPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [transferOpen, setTransferOpen] = useState(false);
+  const [movementsOpen, setMovementsOpen] = useState(false);
+  const [selectedAccount, setSelectedAccount] = useState(null);
+  const [accountTransactions, setAccountTransactions] = useState([]);
+  const [accountTxLoading, setAccountTxLoading] = useState(false);
+  const [accountTxMeta, setAccountTxMeta] = useState({ total: 0, page: 1, totalPages: 0 });
+  const [accountTxPage, setAccountTxPage] = useState(1);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -89,6 +98,47 @@ export default function AccountsPage() {
       toast.error(getErrorMessage(error, 'No se pudo eliminar la cuenta'));
     }
   };
+
+
+  const amountPrefix = (transaction) => {
+    if (transaction.type === 'INCOME') return '+';
+    if (transaction.type === 'TRANSFER') {
+      return transaction.metadata?.transferDirection === 'IN' ? '+' : '-';
+    }
+    return '-';
+  };
+
+  const isPositive = (transaction) => {
+    return transaction.type === 'INCOME'
+      || (transaction.type === 'TRANSFER' && transaction.metadata?.transferDirection === 'IN');
+  };
+
+  const openAccountTransactions = (account) => {
+    setSelectedAccount(account);
+    setMovementsOpen(true);
+    setAccountTxPage(1);
+  };
+
+  const loadAccountTransactions = useCallback(async (accountId, pageToLoad) => {
+    setAccountTxLoading(true);
+    try {
+      const response = await api.get('/transactions', {
+        params: { accountId, page: pageToLoad, limit: 10 },
+      });
+      setAccountTransactions(response.data.data);
+      setAccountTxMeta(response.data.meta);
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'No se pudieron cargar los movimientos'));
+    } finally {
+      setAccountTxLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (movementsOpen && selectedAccount) {
+      loadAccountTransactions(selectedAccount.id, accountTxPage);
+    }
+  }, [accountTxPage, movementsOpen, selectedAccount, loadAccountTransactions]);
 
   if (loading && !accounts.length) {
     return <PageLoader label="Cargando cuentas..." />;
@@ -159,7 +209,8 @@ export default function AccountsPage() {
             return (
               <article
                 key={account.id}
-                className="card group relative overflow-hidden p-5 transition hover:-translate-y-0.5 hover:shadow-soft"
+                onClick={() => openAccountTransactions(account)}
+                className="card group relative cursor-pointer overflow-hidden p-5 transition hover:-translate-y-0.5 hover:shadow-soft"
               >
                 <div
                   className="absolute inset-x-0 top-0 h-1"
@@ -197,7 +248,10 @@ export default function AccountsPage() {
                 </div>
 
                 <div className="mt-4 flex justify-end gap-1 border-t border-slate-100 pt-3">
-                  <Button variant="ghost" size="sm" icon={Pencil} onClick={() => openEdit(account)}>
+                  <Button variant="ghost" size="sm" icon={Eye} onClick={(event) => { event.stopPropagation(); openAccountTransactions(account); }}>
+                    Ver movimientos
+                  </Button>
+                  <Button variant="ghost" size="sm" icon={Pencil} onClick={(event) => { event.stopPropagation(); openEdit(account); }}>
                     Editar
                   </Button>
                   <Button
@@ -205,7 +259,7 @@ export default function AccountsPage() {
                     size="sm"
                     icon={Trash2}
                     className="text-red-500 hover:bg-red-50 hover:text-red-600"
-                    onClick={() => handleDelete(account)}
+                    onClick={(event) => { event.stopPropagation(); handleDelete(account); }}
                   >
                     Eliminar
                   </Button>
@@ -215,6 +269,87 @@ export default function AccountsPage() {
           })}
         </div>
       )}
+
+
+      <Modal
+        open={movementsOpen}
+        onClose={() => setMovementsOpen(false)}
+        title={selectedAccount ? `Movimientos de ${selectedAccount.name}` : 'Movimientos'}
+        description="Ingresos y gastos registrados en esta cuenta."
+        footer={
+          <div className="flex w-full items-center justify-between gap-2">
+            <div className="flex gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={accountTxPage <= 1}
+                onClick={() => setAccountTxPage((value) => Math.max(value - 1, 1))}
+              >
+                Anterior
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={accountTxPage >= (accountTxMeta.totalPages || 1)}
+                onClick={() => setAccountTxPage((value) => value + 1)}
+              >
+                Siguiente
+              </Button>
+            </div>
+            <Button variant="ghost" onClick={() => setMovementsOpen(false)}>
+              Cerrar
+            </Button>
+          </div>
+        }
+      >
+        {accountTxLoading && !accountTransactions.length ? (
+          <PageLoader label="Cargando movimientos..." />
+        ) : accountTransactions.length === 0 ? (
+          <EmptyState
+            icon={Wallet}
+            title="Sin movimientos"
+            description="Esta cuenta aun no tiene ingresos ni gastos registrados."
+          />
+        ) : (
+          <div className="space-y-3">
+            <p className="text-xs text-slate-500">
+              Pagina {accountTxMeta.page || accountTxPage} de {accountTxMeta.totalPages || 1} - {accountTxMeta.total || accountTransactions.length} movimientos
+            </p>
+            <ul className="divide-y divide-slate-100 rounded-xl border border-slate-200">
+              {accountTransactions.map((transaction) => (
+                <li key={transaction.id} className="flex items-start gap-3 px-4 py-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-slate-900">
+                      {transaction.description}
+                    </p>
+                    <p className="mt-0.5 text-xs text-slate-500">
+                      {formatDate(transaction.transactionDate, 'dd MMM yyyy')}
+                      {transaction.category ? ` - ${transaction.category.icon} ${transaction.category.name}` : ''}
+                    </p>
+                    {transaction.notes && (
+                      <p className="mt-1 whitespace-pre-wrap text-xs text-slate-400">{transaction.notes}</p>
+                    )}
+                    {transaction.type === 'TRANSFER' && (
+                      <p className="mt-1 text-xs text-slate-400">
+                        {transaction.metadata?.transferDirection === 'IN' ? 'Recibido desde' : 'Enviado a'}{' '}
+                        {transaction.metadata?.counterpartAccountName || 'cuenta vinculada'}
+                      </p>
+                    )}
+                  </div>
+                  <span
+                    className={
+                      'whitespace-nowrap text-sm font-semibold ' +
+                      (isPositive(transaction) ? 'text-emerald-600' : 'text-slate-900')
+                    }
+                  >
+                    {amountPrefix(transaction)} {formatCurrency(transaction.amount)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </Modal>
 
       <AccountForm
         open={formOpen}

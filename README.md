@@ -31,6 +31,8 @@ SmartFinance AI convierte el caos financiero diario en un panel claro y accionab
 | 📊 Dashboard | Resumen mensual, gastos por categoria, tendencias 30d/6m, movimientos recientes, diagnostico IA |
 | 🤖 IA | Categorizacion por lenguaje natural, escaneo de boletas, predicciones, chat financiero con historial |
 | 📱 PWA | Instalable en laptop y celular, service worker, cache del shell |
+Detalle de transaccion | Boton ojo para ver monto, fecha, cuenta, categoria, transferencia y notas completas |
+Movimientos por cuenta | Al hacer clic en una cuenta se abre un modal con sus ingresos/gastos y paginacion |
 
 ---
 
