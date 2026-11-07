@@ -1,23 +1,59 @@
 import prisma from '../../config/database.js';
 import { NotFoundError } from '../../utils/errors.js';
-import { toIsoDate } from '../../utils/helpers.js';
+import { monthRange, toIsoDate } from '../../utils/helpers.js';
 import { getAiProvider } from './ai-provider.js';
 import { getBudgetsStatus } from '../budget.service.js';
 import { getExpensesByCategory, getRecentTransactions, getSummary } from '../dashboard.service.js';
+import { listAccounts } from '../account.service.js';
+
+const ACCOUNT_TYPE_LABELS = {
+  CHECKING: 'Cuenta corriente',
+  SAVINGS: 'Ahorros',
+  CREDIT_CARD: 'Tarjeta de credito',
+  CASH: 'Efectivo',
+  INVESTMENT: 'Inversion',
+};
 
 const TITLE_MAX_LENGTH = 60;
 const HISTORY_LIMIT = 20;
 
 async function buildFinancialContext(userId) {
-  const [summary, expenses, budgets, recent] = await Promise.all([
+  const { startDate, endDate } = monthRange();
+  const [summary, expenses, budgets, recent, accounts] = await Promise.all([
     getSummary(userId),
     getExpensesByCategory(userId),
     getBudgetsStatus(userId),
     getRecentTransactions(userId, 8),
+    listAccounts(userId),
   ]);
+
+  const accountTotals = await prisma.transaction.groupBy({
+    by: ['accountId', 'type'],
+    where: {
+      account: { userId },
+      transactionDate: { gte: startDate, lte: endDate },
+      type: { in: ['INCOME', 'EXPENSE'] },
+    },
+    _sum: { amount: true },
+  });
+
+  const totalsByAccount = new Map();
+  for (const item of accountTotals) {
+    const current = totalsByAccount.get(item.accountId) || { income: 0, expenses: 0 };
+    if (item.type === 'INCOME') current.income += Number(item._sum.amount || 0);
+    else current.expenses += Number(item._sum.amount || 0);
+    totalsByAccount.set(item.accountId, current);
+  }
 
   const topCategories = expenses.categories.slice(0, 5);
   const alerts = budgets.filter((budget) => budget.alert);
+
+  const accountLines = accounts.map((account) => {
+    const totals = totalsByAccount.get(account.id) || { income: 0, expenses: 0 };
+    return `- ${account.name} (${ACCOUNT_TYPE_LABELS[account.type] || account.type}): saldo S/ ${Number(account.balance).toFixed(2)}; este mes ingresos S/ ${totals.income.toFixed(2)}, gastos S/ ${totals.expenses.toFixed(2)}`;
+  });
+
+  const typeLabel = (type) => (type === 'INCOME' ? 'Ingreso' : type === 'EXPENSE' ? 'Gasto' : 'Transferencia');
 
   const lines = [
     `Mes actual: ${summary.month}`,
@@ -26,7 +62,10 @@ async function buildFinancialContext(userId) {
     `Gastos del mes: S/ ${summary.expenses.toFixed(2)}`,
     `Ahorro estimado: S/ ${summary.savings.toFixed(2)} (${summary.savingsRate}% de los ingresos)`,
     '',
-    'Gastos por categoría:',
+    'Cuentas activas:',
+    accountLines.length ? accountLines.join('\n') : '- Sin cuentas activas',
+    '',
+    'Gastos por categoria:',
     topCategories.length
       ? topCategories
         .map((category) => `- ${category.icon} ${category.name}: S/ ${category.total.toFixed(2)} (${category.percentage}%)`)
@@ -40,10 +79,10 @@ async function buildFinancialContext(userId) {
         .join('\n')
       : '- Ninguno',
     '',
-    'Últimos movimientos:',
+    'Ultimos movimientos:',
     recent.length
       ? recent
-        .map((transaction) => `- ${toIsoDate(transaction.transactionDate)} | ${transaction.type} | S/ ${Number(transaction.amount).toFixed(2)} | ${transaction.description}`)
+        .map((transaction) => `- ${toIsoDate(transaction.transactionDate)} | ${typeLabel(transaction.type)} | S/ ${Number(transaction.amount).toFixed(2)} | ${transaction.description} | Cuenta: ${transaction.account?.name || 'Sin cuenta'}`)
         .join('\n')
       : '- Sin movimientos recientes',
   ];
@@ -54,11 +93,12 @@ async function buildFinancialContext(userId) {
     expenses,
     budgets,
     recent,
+    accounts,
   };
 }
 
 function buildFallbackReply(context) {
-  const { summary, expenses, budgets } = context;
+  const { summary, expenses, budgets, accounts } = context;
 
   if (summary.transactionCount === 0) {
     return 'Todavía no tienes movimientos este mes. Registra tus ingresos y gastos para que pueda darte un análisis útil. Si quieres, empieza agregando tu sueldo y tus gastos fijos.';
@@ -79,6 +119,13 @@ function buildFallbackReply(context) {
     lines.push('Presupuestos en alerta:');
     for (const budget of alerts.slice(0, 3)) {
       lines.push(`- ${budget.category.icon} ${budget.category.name}: S/ ${budget.spent.toFixed(2)} de S/ ${budget.amountLimit.toFixed(2)}.`);
+    }
+  }
+
+  if (accounts?.length) {
+    lines.push('Tus cuentas activas:');
+    for (const account of accounts.slice(0, 5)) {
+      lines.push(`- ${account.name}: S/ ${Number(account.balance).toFixed(2)}.`);
     }
   }
 
@@ -163,10 +210,10 @@ export async function sendMessage(userId, { message, sessionId = null }) {
     try {
       reply = await provider.generateText({
         system:
-          'Eres SmartFinance AI, un asesor financiero personal para usuarios de Perú. ' +
-          'Responde en español, de forma clara, breve y práctica. Usa los datos reales del usuario que se te entregan; ' +
-          'nunca inventes cifras, cuentas ni transacciones. No des asesoría de inversión garantizada ni información legal o tributaria definitiva. ' +
-          'Si faltan datos, dilo y pide lo necesario. Usa como máximo 6 viñetas.\n\n' +
+          'Eres SmartFinance AI, un asesor financiero personal para usuarios de Peru. ' +
+          'Responde en espanol, de forma clara, breve y practica. Usa los datos reales del usuario que se te entregan, incluyendo la seccion Cuentas activas; ' +
+          'nunca inventes cifras, cuentas ni transacciones. Si preguntan por una cuenta especifica, usa su saldo y movimientos del mes. ' +
+          'No des asesoria de inversion garantizada ni informacion legal o tributaria definitiva. Si faltan datos, dilo y pide lo necesario. Usa como maximo 6 viñetas.\n\n' +
           `Datos financieros del usuario:\n${context.text}`,
         prompt: message,
         history,

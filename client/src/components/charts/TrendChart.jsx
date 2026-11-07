@@ -30,7 +30,7 @@ function CustomTooltip({ active, payload, label }) {
 
 export default function TrendChart({ data = [] }) {
   return (
-    <div className="h-72 w-full">
+    <div className="h-56 w-full sm:h-72">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data} margin={{ top: 10, right: 8, left: -12, bottom: 0 }}>
           <defs>

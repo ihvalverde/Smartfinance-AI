@@ -145,9 +145,7 @@ export async function getBudgetsStatus(userId, referenceDate = todayLima()) {
     orderBy: { createdAt: 'desc' },
   });
 
-  const results = [];
-
-  for (const budget of budgets) {
+  const results = await Promise.all(budgets.map(async (budget) => {
     const range = budget.startDate && budget.endDate
       ? { startDate: budget.startDate, endDate: budget.endDate }
       : periodRange(budget.period, referenceDate, budget.startDate);
@@ -182,7 +180,7 @@ export async function getBudgetsStatus(userId, referenceDate = todayLima()) {
     if (percentage >= 1) status = 'exceeded';
     else if (percentage >= threshold) status = 'warning';
 
-    results.push({
+    return {
       id: budget.id,
       categoryId: budget.categoryId,
       category: budget.category,
@@ -197,8 +195,8 @@ export async function getBudgetsStatus(userId, referenceDate = todayLima()) {
       percentage: Math.round(percentage * 10000) / 100,
       status,
       alert: status !== 'ok',
-    });
-  }
+    };
+  }));
 
   return results;
 }

@@ -24,7 +24,7 @@ export default function ExpensePieChart({ categories = [] }) {
 
   if (!categories.length) {
     return (
-      <div className="flex h-72 items-center justify-center text-sm text-slate-400">
+      <div className="flex h-44 items-center justify-center text-sm text-slate-400 sm:h-72">
         Sin gastos registrados este mes
       </div>
     );
@@ -32,7 +32,7 @@ export default function ExpensePieChart({ categories = [] }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="relative h-48 w-full">
+      <div className="relative h-44 w-full sm:h-48">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -56,7 +56,7 @@ export default function ExpensePieChart({ categories = [] }) {
         </ResponsiveContainer>
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
           <span className="text-[11px] font-medium uppercase tracking-wide text-slate-400">Total</span>
-          <span className="text-lg font-bold text-slate-900">{formatCurrency(total)}</span>
+          <span className="block max-w-[120px] truncate text-sm font-bold text-slate-900 sm:text-lg">{formatCurrency(total)}</span>
         </div>
       </div>
 

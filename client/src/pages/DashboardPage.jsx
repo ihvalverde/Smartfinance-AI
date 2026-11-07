@@ -61,15 +61,15 @@ function StatCard({ label, value, icon: Icon, tone, change, invertChange, subtit
   };
 
   return (
-    <div className="card p-5">
+    <div className="card p-4 sm:p-5">
       <div className="flex items-start justify-between">
         <div className={classNames('rounded-xl p-2.5', tones[tone])}>
           <Icon className="h-5 w-5" />
         </div>
         {change !== undefined ? <ChangeBadge value={change} invert={invertChange} /> : null}
       </div>
-      <p className="mt-4 text-xs font-medium uppercase tracking-wide text-slate-500">{label}</p>
-      <p className="mt-1 text-2xl font-bold tracking-tight text-slate-900">{value}</p>
+      <p className="mt-3 text-[11px] font-medium uppercase tracking-wide text-slate-500 sm:mt-4 sm:text-xs">{label}</p>
+      <p className="mt-1 text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">{value}</p>
       {subtitle && <p className="mt-1 text-xs text-slate-400">{subtitle}</p>}
     </div>
   );
@@ -140,12 +140,12 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
         <div>
           <p className="text-sm font-medium text-slate-500">
             {formatDate(new Date(), "EEEE, d 'de' MMMM 'de' yyyy")}
           </p>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+          <h1 className="mt-1 text-xl font-bold tracking-tight text-slate-900 sm:text-2xl lg:text-3xl">
             Hola, {firstName(user?.fullName || '')}
           </h1>
           <p className="mt-1 text-sm text-slate-500">
@@ -197,7 +197,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <section className="card p-5 lg:col-span-2">
+        <section className="card p-4 sm:p-5 lg:col-span-2">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <h2 className="text-base font-semibold text-slate-900">Flujo de los últimos 30 días</h2>
@@ -212,7 +212,7 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        <section className="card p-5">
+        <section className="card p-4 sm:p-5">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-base font-semibold text-slate-900">Gastos por categoría</h2>
@@ -225,7 +225,7 @@ export default function DashboardPage() {
         </section>
       </div>
 
-      <section className="overflow-hidden rounded-2xl bg-gradient-to-br from-slate-950 via-slate-900 to-brand-950 p-6 text-white shadow-soft">
+      <section className="overflow-hidden rounded-2xl bg-gradient-to-br from-slate-950 via-slate-900 to-brand-950 p-5 text-white shadow-soft sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-center gap-2 text-brand-300">
             <Sparkles className="h-5 w-5" />
@@ -239,7 +239,7 @@ export default function DashboardPage() {
           </Link>
         </div>
 
-        <p className="mt-4 max-w-3xl text-lg font-semibold leading-snug text-white">
+        <p className="mt-3 max-w-3xl text-base font-semibold leading-snug text-white sm:mt-4 sm:text-lg">
           {diagnosis.message}
         </p>
 
@@ -257,7 +257,7 @@ export default function DashboardPage() {
 
       <div className="grid gap-6 lg:grid-cols-5">
         <section className="card lg:col-span-3">
-          <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+          <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3.5 sm:px-5 sm:py-4">
             <h2 className="text-base font-semibold text-slate-900">Movimientos recientes</h2>
             <Link to="/transactions" className="text-xs font-semibold text-brand-600 hover:text-brand-700">
               Ver todos
@@ -281,7 +281,7 @@ export default function DashboardPage() {
                 const direction = transaction.metadata?.transferDirection;
                 const positive = isIncome || direction === 'IN';
                 return (
-                  <li key={transaction.id} className="flex items-center gap-3 px-5 py-3.5">
+                  <li key={transaction.id} className="flex items-center gap-3 px-4 py-3 sm:px-5 sm:py-3.5">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-base">
                       {isTransfer ? '⇄' : transaction.category?.icon || (isIncome ? '💰' : '🧾')}
                     </div>
@@ -296,7 +296,7 @@ export default function DashboardPage() {
                     </div>
                     <span
                       className={classNames(
-                        'text-sm font-semibold',
+                        'shrink-0 whitespace-nowrap text-xs font-semibold sm:text-sm',
                         positive ? 'text-emerald-600' : 'text-slate-900',
                       )}
                     >
@@ -326,7 +326,7 @@ export default function DashboardPage() {
               />
             </div>
           ) : (
-            <ul className="space-y-5 p-5">
+            <ul className="space-y-4 p-4 sm:space-y-5 sm:p-5">
               {alerts.slice(0, 4).map((budget) => (
                 <li key={budget.id}>
                   <div className="flex items-center justify-between gap-2">

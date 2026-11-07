@@ -12,6 +12,7 @@ const SUGGESTIONS = [
   '¿En qué categoría debería recortar?',
   'Dame un plan de ahorro para el próximo mes',
   '¿Estoy cumpliendo mis presupuestos?',
+  'Cuanto tengo en cada cuenta?',
 ];
 
 function TypingIndicator() {

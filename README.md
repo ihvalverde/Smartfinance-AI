@@ -29,10 +29,11 @@ SmartFinance AI convierte el caos financiero diario en un panel claro y accionab
 | 💳 Transacciones | CRUD con filtros, transferencias atomicas con `transferPairId` |
 | 🎯 Presupuestos | CRUD, estado por periodo, alertas de exceso |
 | 📊 Dashboard | Resumen mensual, gastos por categoria, tendencias 30d/6m, movimientos recientes, diagnostico IA |
-| 🤖 IA | Categorizacion por lenguaje natural, escaneo de boletas, predicciones, chat financiero con historial |
+| 🤖 IA | Categorizacion por lenguaje natural, escaneo de boletas, predicciones, chat financiero con historial y acceso a saldos por cuenta |
 | 📱 PWA | Instalable en laptop y celular, service worker, cache del shell |
-Detalle de transaccion | Boton ojo para ver monto, fecha, cuenta, categoria, transferencia y notas completas |
-Movimientos por cuenta | Al hacer clic en una cuenta se abre un modal con sus ingresos/gastos y paginacion |
+| 👁️ Detalle de transacción | Botón ojo para ver monto, fecha, cuenta, categoría, transferencia y notas completas |
+| 🏦 Movimientos por cuenta | Al hacer clic en una cuenta se abre un modal con sus ingresos/gastos y paginación |
+| 📱 Diseño responsive | Dashboard y modales adaptados a celular |
 
 ---
 
