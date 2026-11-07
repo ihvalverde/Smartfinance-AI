@@ -12,7 +12,7 @@ export default function AppLayout() {
     <div className="min-h-screen bg-slate-50 transition-colors duration-300 dark:bg-slate-950">
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <header className="sticky top-0 z-50 flex w-full items-center justify-between gap-3 border-b border-slate-200 bg-white/90 px-4 py-3 sm:px-6 backdrop-blur transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900/90 lg:hidden">
+      <header className="sticky top-0 z-30 flex w-full items-center justify-between gap-3 border-b border-slate-200 bg-white/90 px-4 py-3 sm:px-6 backdrop-blur transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900/90 lg:hidden">
         <button
           type="button"
           onClick={() => setSidebarOpen(true)}
