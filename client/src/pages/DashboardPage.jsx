@@ -61,7 +61,7 @@ function StatCard({ label, value, icon: Icon, tone, change, invertChange, subtit
   };
 
   return (
-    <div className="card p-4 sm:p-5">
+    <div className="card w-full overflow-hidden p-3.5 sm:p-5">
       <div className="flex items-start justify-between">
         <div className={classNames('rounded-xl p-2.5', tones[tone])}>
           <Icon className="h-5 w-5" />
@@ -113,7 +113,7 @@ export default function DashboardPage() {
     return (
       <div className="space-y-6">
         <div className="h-20 animate-pulse rounded-2xl bg-slate-200/60" />
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {[0, 1, 2, 3].map((key) => <SkeletonCard key={key} />)}
         </div>
         <div className="grid gap-6 lg:grid-cols-3">
@@ -163,7 +163,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard
           label="Saldo total"
           value={formatCurrency(summary.balance)}
@@ -197,7 +197,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <section className="card p-4 sm:p-5 lg:col-span-2">
+        <section className="card w-full overflow-hidden p-4 sm:p-5 lg:col-span-2">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <h2 className="text-base font-semibold text-slate-900">Flujo de los últimos 30 días</h2>
@@ -212,7 +212,7 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        <section className="card p-4 sm:p-5">
+        <section className="card w-full overflow-hidden p-4 sm:p-5">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-base font-semibold text-slate-900">Gastos por categoría</h2>
@@ -225,7 +225,7 @@ export default function DashboardPage() {
         </section>
       </div>
 
-      <section className="overflow-hidden rounded-2xl bg-gradient-to-br from-slate-950 via-slate-900 to-brand-950 p-5 text-white shadow-soft sm:p-6">
+      <section className="w-full overflow-hidden rounded-2xl bg-gradient-to-br from-slate-950 via-slate-900 to-brand-950 p-5 text-white shadow-soft sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-center gap-2 text-brand-300">
             <Sparkles className="h-5 w-5" />
@@ -256,7 +256,7 @@ export default function DashboardPage() {
       </section>
 
       <div className="grid gap-6 lg:grid-cols-5">
-        <section className="card lg:col-span-3">
+        <section className="card w-full overflow-hidden lg:col-span-3">
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3.5 sm:px-5 sm:py-4">
             <h2 className="text-base font-semibold text-slate-900">Movimientos recientes</h2>
             <Link to="/transactions" className="text-xs font-semibold text-brand-600 hover:text-brand-700">
@@ -309,7 +309,7 @@ export default function DashboardPage() {
           )}
         </section>
 
-        <section className="card lg:col-span-2">
+        <section className="card w-full overflow-hidden lg:col-span-2">
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3.5 sm:px-5 sm:py-4">
             <h2 className="text-base font-semibold text-slate-900">Presupuestos en alerta</h2>
             <Link to="/budgets" className="text-xs font-semibold text-brand-600 hover:text-brand-700">

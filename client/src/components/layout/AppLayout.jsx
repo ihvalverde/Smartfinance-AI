@@ -12,7 +12,7 @@ export default function AppLayout() {
     <div className="min-h-screen bg-slate-50 transition-colors duration-300 dark:bg-slate-950">
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <header className="sticky top-0 z-30 flex w-full items-center justify-between gap-3 border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900/90 lg:hidden">
+      <header className="sticky top-0 z-50 flex w-full items-center justify-between gap-3 border-b border-slate-200 bg-white/90 px-4 py-3 sm:px-6 backdrop-blur transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900/90 lg:hidden">
         <button
           type="button"
           onClick={() => setSidebarOpen(true)}
@@ -26,7 +26,7 @@ export default function AppLayout() {
       </header>
 
       <div className="lg:pl-72">
-        <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+        <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
           <Outlet />
         </main>
       </div>
