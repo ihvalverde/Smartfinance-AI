@@ -12,17 +12,17 @@ export default function AppLayout() {
     <div className="min-h-screen bg-slate-50 transition-colors duration-300 dark:bg-slate-950">
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <header className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900/90 lg:hidden">
+      <header className="sticky top-0 z-30 flex w-full items-center justify-between gap-3 border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900/90 lg:hidden">
         <button
           type="button"
           onClick={() => setSidebarOpen(true)}
-          className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-600 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
           aria-label="Abrir menú"
         >
           <Menu className="h-5 w-5" />
         </button>
-        <Brand compact />
-        <ThemeToggle />
+        <Brand compact className="shrink-0" />
+        <ThemeToggle className="!h-10 !w-10 !border-0 !bg-transparent hover:!bg-slate-100 dark:hover:!bg-slate-800" />
       </header>
 
       <div className="lg:pl-72">

@@ -265,7 +265,7 @@ export default function DashboardPage() {
           </div>
 
           {recent.length === 0 ? (
-            <div className="p-5">
+            <div className="p-4 sm:p-5">
               <EmptyState
                 icon={Wallet}
                 title="Aún no tienes movimientos"
@@ -310,7 +310,7 @@ export default function DashboardPage() {
         </section>
 
         <section className="card lg:col-span-2">
-          <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+          <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3.5 sm:px-5 sm:py-4">
             <h2 className="text-base font-semibold text-slate-900">Presupuestos en alerta</h2>
             <Link to="/budgets" className="text-xs font-semibold text-brand-600 hover:text-brand-700">
               Gestionar
@@ -318,7 +318,7 @@ export default function DashboardPage() {
           </div>
 
           {alerts.length === 0 ? (
-            <div className="p-5">
+            <div className="p-4 sm:p-5">
               <EmptyState
                 icon={PiggyBank}
                 title="Todo bajo control"
