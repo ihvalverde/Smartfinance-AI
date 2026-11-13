@@ -52,14 +52,15 @@ async function aggregateTotals(userId, startDate, endDate) {
 
 export async function getSummary(userId) {
   const { startDate, endDate } = monthRange();
-  const current = await aggregateTotals(userId, startDate, endDate);
   const previousRange = previousMonthRange();
-  const previous = await aggregateTotals(userId, previousRange.startDate, previousRange.endDate);
-
-  const accounts = await prisma.account.findMany({
-    where: { userId, isActive: true },
-    select: { balance: true },
-  });
+  const [current, previous, accounts] = await Promise.all([
+    aggregateTotals(userId, startDate, endDate),
+    aggregateTotals(userId, previousRange.startDate, previousRange.endDate),
+    prisma.account.findMany({
+      where: { userId, isActive: true },
+      select: { balance: true },
+    }),
+  ]);
   const balance = roundMoney(
     accounts.reduce((sum, account) => sum + Number(account.balance), 0),
   );
@@ -228,9 +229,11 @@ export async function getRecentTransactions(userId, limit = 5) {
 }
 
 export async function getDiagnosis(userId) {
-  const summary = await getSummary(userId);
-  const expenses = await getExpensesByCategory(userId);
-  const budgets = await getBudgetsStatus(userId);
+  const [summary, expenses, budgets] = await Promise.all([
+    getSummary(userId),
+    getExpensesByCategory(userId),
+    getBudgetsStatus(userId),
+  ]);
 
   const insights = [];
   const topCategory = expenses.categories[0] || null;

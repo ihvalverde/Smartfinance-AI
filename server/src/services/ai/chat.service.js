@@ -246,8 +246,4 @@ export async function sendMessage(userId, { message, sessionId = null }) {
   };
 }
 
-export async function createSession(userId, title = 'Nueva conversación') {
-  return prisma.aiChatSession.create({
-    data: { userId, title: title.slice(0, TITLE_MAX_LENGTH) },
-  });
-}
+

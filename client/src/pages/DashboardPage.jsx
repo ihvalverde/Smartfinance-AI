@@ -78,17 +78,32 @@ function StatCard({ label, value, icon: Icon, tone, change, invertChange, subtit
 export default function DashboardPage() {
   const user = useAuthStore((state) => state.user);
   const [data, setData] = useState(null);
+  const [diagnosis, setDiagnosis] = useState(null);
+  const [diagnosisLoading, setDiagnosisLoading] = useState(true);
+  const [diagnosisError, setDiagnosisError] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const loadDiagnosis = useCallback(async () => {
+    setDiagnosisLoading(true);
+    setDiagnosisError(null);
+    try {
+      const response = await api.get('/dashboard/diagnosis');
+      setDiagnosis(response.data.data);
+    } catch (error) {
+      setDiagnosisError(getErrorMessage(error, 'No se pudo cargar el diagnóstico'));
+    } finally {
+      setDiagnosisLoading(false);
+    }
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [summary, expenses, trends, recent, diagnosis] = await Promise.all([
+      const [summary, expenses, trends, recent] = await Promise.all([
         api.get('/dashboard/summary'),
         api.get('/dashboard/expenses-by-category'),
         api.get('/dashboard/trends', { params: { days: 30, months: 6 } }),
         api.get('/dashboard/recent', { params: { limit: 6 } }),
-        api.get('/dashboard/diagnosis'),
       ]);
 
       setData({
@@ -96,14 +111,15 @@ export default function DashboardPage() {
         expenses: expenses.data.data,
         trends: trends.data.data,
         recent: recent.data.data,
-        diagnosis: diagnosis.data.data,
       });
     } catch (error) {
       toast.error(getErrorMessage(error, 'No se pudo cargar el dashboard'));
     } finally {
       setLoading(false);
     }
-  }, []);
+
+    loadDiagnosis();
+  }, [loadDiagnosis]);
 
   useEffect(() => {
     load();
@@ -135,8 +151,8 @@ export default function DashboardPage() {
     );
   }
 
-  const { summary, expenses, trends, recent, diagnosis } = data;
-  const alerts = diagnosis.budgetAlerts || [];
+  const { summary, expenses, trends, recent } = data;
+  const alerts = diagnosis?.budgetAlerts || [];
 
   return (
     <div className="space-y-6">
@@ -239,19 +255,39 @@ export default function DashboardPage() {
           </Link>
         </div>
 
-        <p className="mt-3 max-w-3xl text-base font-semibold leading-snug text-white sm:mt-4 sm:text-lg">
-          {diagnosis.message}
-        </p>
+        {diagnosisLoading && (
+          <div className="mt-4 space-y-2">
+            <div className="h-5 w-3/4 animate-pulse rounded bg-white/10" />
+            <div className="h-4 w-1/2 animate-pulse rounded bg-white/10" />
+          </div>
+        )}
 
-        {diagnosis.insights?.length > 0 && (
-          <ul className="mt-4 grid gap-2 sm:grid-cols-2">
-            {diagnosis.insights.map((insight, index) => (
-              <li key={index} className="flex items-start gap-2 text-sm text-slate-300">
-                <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-400" />
-                {insight}
-              </li>
-            ))}
-          </ul>
+        {diagnosisError && (
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <p className="text-sm text-red-200">{diagnosisError}</p>
+            <Button size="sm" variant="secondary" onClick={loadDiagnosis}>
+              Reintentar diagnóstico
+            </Button>
+          </div>
+        )}
+
+        {diagnosis && !diagnosisLoading && (
+          <>
+            <p className="mt-3 max-w-3xl text-base font-semibold leading-snug text-white sm:mt-4 sm:text-lg">
+              {diagnosis.message}
+            </p>
+
+            {diagnosis.insights?.length > 0 && (
+              <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+                {diagnosis.insights.map((insight, index) => (
+                  <li key={index} className="flex items-start gap-2 text-sm text-slate-300">
+                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-400" />
+                    {insight}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
         )}
       </section>
 

@@ -145,20 +145,29 @@ export async function getBudgetsStatus(userId, referenceDate = todayLima()) {
     orderBy: { createdAt: 'desc' },
   });
 
+  const childCategories = budgets.length
+    ? await prisma.category.findMany({
+      where: {
+        parentId: { in: budgets.map((budget) => budget.categoryId) },
+        OR: [{ isSystem: true }, { userId }],
+      },
+      select: { id: true, parentId: true },
+    })
+    : [];
+
+  const childrenByParent = new Map();
+  for (const child of childCategories) {
+    const current = childrenByParent.get(child.parentId) || [];
+    current.push(child.id);
+    childrenByParent.set(child.parentId, current);
+  }
+
   const results = await Promise.all(budgets.map(async (budget) => {
     const range = budget.startDate && budget.endDate
       ? { startDate: budget.startDate, endDate: budget.endDate }
       : periodRange(budget.period, referenceDate, budget.startDate);
 
-    const childCategories = await prisma.category.findMany({
-      where: {
-        parentId: budget.categoryId,
-        OR: [{ isSystem: true }, { userId }],
-      },
-      select: { id: true },
-    });
-
-    const categoryIds = [budget.categoryId, ...childCategories.map((category) => category.id)];
+    const categoryIds = [budget.categoryId, ...(childrenByParent.get(budget.categoryId) || [])];
 
     const aggregate = await prisma.transaction.aggregate({
       where: {

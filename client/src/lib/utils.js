@@ -60,10 +60,6 @@ export function formatCompactCurrency(value) {
   }).format(Number(value || 0));
 }
 
-export function formatNumber(value) {
-  return new Intl.NumberFormat('es-PE').format(Number(value || 0));
-}
-
 export function parseDateValue(value) {
   if (!value) return null;
   if (value instanceof Date) return value;
@@ -88,14 +84,6 @@ export function formatMonth(key) {
   return format(new Date(year, month - 1, 1), 'MMM yyyy', { locale: es });
 }
 
-export function formatMonthLong(key) {
-  if (!key) return '—';
-  const [year, month] = String(key).split('-').map(Number);
-  if (!year || !month) return key;
-  const text = format(new Date(year, month - 1, 1), 'MMMM yyyy', { locale: es });
-  return text.charAt(0).toUpperCase() + text.slice(1);
-}
-
 export function todayISO() {
   return new Intl.DateTimeFormat('en-CA', {
     timeZone: 'America/Lima',
@@ -103,10 +91,6 @@ export function todayISO() {
     month: '2-digit',
     day: '2-digit',
   }).format(new Date());
-}
-
-export function currentMonthLabel() {
-  return format(new Date(), "MMMM yyyy", { locale: es });
 }
 
 export function getErrorMessage(error, fallback = 'Ocurrió un error inesperado') {
@@ -134,13 +118,4 @@ export function classNames(...values) {
   return values.filter(Boolean).join(' ');
 }
 
-export function statusFromPercentage(percentage) {
-  if (percentage >= 100) return 'exceeded';
-  if (percentage >= 80) return 'warning';
-  return 'ok';
-}
 
-export function percentage(value, total) {
-  if (!total) return 0;
-  return Math.round((Number(value) / Number(total)) * 10000) / 100;
-}

@@ -124,7 +124,7 @@ export async function createTransaction(userId, data, aiMeta = null) {
         categoryId: data.categoryId || null,
         type: data.type,
         amount: new Prisma.Decimal(roundMoney(data.amount)),
-        currency: data.currency || 'PEN',
+        currency: data.currency || account.currency || 'PEN',
         description: data.description,
         notes: data.notes || null,
         transactionDate,
@@ -190,7 +190,9 @@ export async function updateTransaction(userId, transactionId, data) {
         categoryId: newCategoryId || null,
         type: newType,
         amount: new Prisma.Decimal(roundMoney(newAmount)),
-        currency: data.currency || existing.currency,
+        currency: data.currency !== undefined
+          ? data.currency
+          : (newAccountId !== existing.accountId ? newAccount.currency : existing.currency),
         description: data.description !== undefined ? data.description : existing.description,
         notes: data.notes !== undefined ? data.notes : existing.notes,
         transactionDate,
@@ -248,6 +250,10 @@ export async function createTransfer(userId, data) {
 
   if (fromAccount.id === toAccount.id) {
     throw new ValidationError('Las cuentas de origen y destino deben ser diferentes');
+  }
+
+  if (fromAccount.currency !== toAccount.currency) {
+    throw new ValidationError('Las cuentas de origen y destino deben tener la misma moneda');
   }
 
   const amount = roundMoney(data.amount);

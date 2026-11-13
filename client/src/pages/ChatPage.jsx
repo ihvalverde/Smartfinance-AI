@@ -35,7 +35,7 @@ export default function ChatPage() {
   const [input, setInput] = useState('');
   const bottomRef = useRef(null);
 
-  const loadSessions = useCallback(async (autoSelect = false) => {
+  const loadSessions = useCallback(async () => {
     const response = await api.get('/ai/chat/sessions');
     const data = response.data.data;
     setSessions(data);

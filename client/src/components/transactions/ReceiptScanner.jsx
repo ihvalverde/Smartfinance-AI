@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ImagePlus, ScanLine, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../../lib/api.js';
@@ -12,6 +12,12 @@ export default function ReceiptScanner({ onUseSuggestion }) {
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
+
+  useEffect(() => {
+    return () => {
+      if (preview) URL.revokeObjectURL(preview);
+    };
+  }, [preview]);
 
   const handleFile = (event) => {
     const selected = event.target.files?.[0];
@@ -38,9 +44,7 @@ export default function ReceiptScanner({ onUseSuggestion }) {
 
     setLoading(true);
     try {
-      const response = await api.post('/ai/scan-receipt', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+    const response = await api.post('/ai/scan-receipt', formData);
       setResult(response.data.data);
     } catch (error) {
       toast.error(getErrorMessage(error, 'No se pudo leer la boleta'));

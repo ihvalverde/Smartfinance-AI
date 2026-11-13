@@ -23,12 +23,12 @@ SmartFinance AI convierte el caos financiero diario en un panel claro y accionab
 
 | Modulo | Capacidades |
 | --- | --- |
-| 🔐 Auth | Registro/login, JWT access + refresh cookie httpOnly, perfil editable |
+| 🔐 Auth | Registro/login, JWT access + refresh cookie httpOnly, perfil consultable y actualizable por API |
 | 🏦 Cuentas | CRUD, saldos, resumen consolidado |
 | 🏷️ Categorias | Sistema + personalizadas, jerarquicas, ocultar/restaurar sin perder historial |
 | 💳 Transacciones | CRUD con filtros, transferencias atomicas con `transferPairId` |
 | 🎯 Presupuestos | CRUD, estado por periodo, alertas de exceso |
-| 📊 Dashboard | Resumen mensual, gastos por categoria, tendencias 30d/6m, movimientos recientes, diagnostico IA |
+| 📊 Dashboard | Resumen mensual, gastos por categoria, tendencias 30d/6m, movimientos recientes, diagnostico determinista con presupuestos |
 | 🤖 IA | Categorizacion por lenguaje natural, escaneo de boletas, predicciones, chat financiero con historial y acceso a saldos por cuenta |
 | 📱 PWA | Instalable en laptop y celular, service worker, cache del shell |
 | 👁️ Detalle de transacción | Botón ojo para ver monto, fecha, cuenta, categoría, transferencia y notas completas |
@@ -39,15 +39,7 @@ SmartFinance AI convierte el caos financiero diario en un panel claro y accionab
 
 ## 🖼️ Vistas
 
-> Agrega aqui tus capturas en `docs/screenshots/` y actualiza las rutas.
-
-```text
-docs/screenshots/
-  dashboard.png
-  transactions.png
-  chat.png
-  mobile.png
-```
+La interfaz está optimizada para desktop y móvil. Las capturas se pueden agregar en `docs/screenshots/` cuando se generen; el directorio no es obligatorio para ejecutar el proyecto.
 
 ---
 
@@ -109,6 +101,7 @@ SmartFinance-AI/
 │       ├── utils/
 │       └── validators/
 ├── docs/
+│   └── database-schema.sql       # Esquema SQL de referencia
 ├── package.json                 # Workspaces: server + client
 └── vercel.json
 ```
@@ -142,10 +135,12 @@ Completa en `.env`:
 - `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`
 - `AI_PROVIDER` (`mock` o `gemini`)
 - `GEMINI_API_KEY` (solo si usas Gemini)
+- `AI_TIMEOUT_MS` (opcional, por defecto 15000)
 
 ### 3) Base de datos y datos demo
 
 ```bash
+npm run db:generate
 npm run db:deploy
 npm run db:seed
 ```
@@ -197,6 +192,7 @@ JWT_REFRESH_EXPIRES_IN=7d
 GEMINI_API_KEY
 GEMINI_MODEL=gemini-3.8-flash
 AI_PROVIDER=gemini
+AI_TIMEOUT_MS=15000
 NODE_ENV=production
 CLIENT_URL=https://tu-dominio.vercel.app
 ```
@@ -224,7 +220,7 @@ Base: `/api/v1`. Todas las rutas salvo auth requieren `Authorization: Bearer <ac
 | --- | --- |
 | Auth | `POST /auth/register`, `POST /auth/login`, `POST /auth/refresh`, `POST /auth/logout`, `GET/PATCH /auth/me` |
 | Cuentas | `GET/POST /accounts`, `GET /accounts/summary`, `GET/PATCH/DELETE /accounts/:id` |
-| Categorias | `GET/POST /categories`, `GET /categories/tree`, `POST /categories/restore-hidden` |
+| Categorias | `GET/POST /categories`, `GET /categories/tree`, `GET /categories/:id`, `PATCH/DELETE /categories/:id`, `POST /categories/restore-hidden`, `GET /categories/hidden-count` |
 | Transacciones | `GET/POST /transactions`, `POST /transactions/transfer`, `GET/PATCH/DELETE /transactions/:id` |
 | Presupuestos | `GET/POST /budgets`, `GET /budgets/status`, `PATCH/DELETE /budgets/:id` |
 | Dashboard | `GET /dashboard/summary`, `/expenses-by-category`, `/trends`, `/recent`, `/diagnosis` |

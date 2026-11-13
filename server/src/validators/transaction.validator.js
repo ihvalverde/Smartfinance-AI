@@ -8,7 +8,7 @@ export const createTransactionSchema = z.object({
     errorMap: () => ({ message: 'El tipo debe ser INCOME o EXPENSE' }),
   }),
   amount: amountSchema,
-  currency: z.string().length(3).transform((v) => v.toUpperCase()).default('PEN'),
+  currency: z.string().length(3).transform((v) => v.toUpperCase()).optional(),
   description: z.string().min(1, 'La descripción es requerida').max(255).transform((v) => v.trim()),
   notes: z.string().max(1000).optional().nullable(),
   transactionDate: z.union([dateOnlySchema, z.string().datetime({ offset: true })]).optional(),
